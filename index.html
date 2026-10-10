@@ -431,18 +431,18 @@
           }).addTo(map).bindPopup("You are here").openPopup();
           map.setView([lat, lng], 13);
         }, () => alert("Unable to retrieve location."));
-<<<<<<< HEAD
+ HEAD
       }
     }
 
-=======
-      } else {
+
+       {
         alert("Geolocation not supported.");
       }
-    }
+    
 
     // USGS Gauges
->>>>>>> 70bcc58b2598ebb07c9aff55482501645595e595
+
     const STREAMS_USGS = [
       { name: "Kinnickinnic River (River Falls)", county: "St. Croix Co.", usgs: "05342000" },
       { name: "Rush River (Elmwood)", county: "Pierce Co.", usgs: "05341500" }
