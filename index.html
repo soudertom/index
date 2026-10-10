@@ -23,14 +23,14 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">Driftless Stream Guide</h1>
-    <p class="text-xs text-gray-400">WI & MN Field Access & Fly Box Guide</p>
+    <p class="text-xs text-gray-400">WI & MN Field Access & Catch Journal</p>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
     <button onclick="switchTab('map')" id="btn-map" class="py-2 px-3 rounded text-accent bg-gray-800">🗺️ Access</button>
-    <button onclick="switchTab('flies')" id="btn-flies" class="py-2 px-3 rounded text-gray-400">🪡 25 Flies</button>
     <button onclick="switchTab('catches')" id="btn-catches" class="py-2 px-3 rounded text-gray-400">🎣 Catch Log</button>
+    <button onclick="switchTab('flies')" id="btn-flies" class="py-2 px-3 rounded text-gray-400">🪡 25 Flies</button>
     <button onclick="switchTab('hatches')" id="btn-hatches" class="py-2 px-3 rounded text-gray-400">🐛 Hatches</button>
   </nav>
 
@@ -51,7 +51,7 @@
       <!-- OFFICIAL DNR PAGE LINK BUTTON -->
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-2">
         <h3 class="text-xs font-bold text-gray-200">📄 WI DNR Official Maps Page</h3>
-        <p class="text-[11px] text-gray-400">Download county-by-county high-res PDF maps directly from the state site:</p>
+        <p class="text-[11px] text-gray-400">Download official high-res county PDF maps directly from WI DNR:</p>
         <a href="https://dnr.wisconsin.gov/topic/Fishing/trout/streammaps" target="_blank" class="block text-center bg-gray-800 hover:bg-gray-700 text-highlight font-bold text-xs py-2 rounded-lg border border-gray-700 transition">
           Open WI DNR Trout Maps Webpage ↗
         </a>
@@ -60,29 +60,30 @@
       <!-- ACCESS DIRECTORY -->
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <h2 class="text-sm font-bold text-gray-200">🚗 Selectable Stream Access Points</h2>
-        <div id="access-cards-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
+        <div id="access-cards-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+          <p class="text-xs text-gray-500">Loading stream points...</p>
+        </div>
       </div>
     </div>
 
-    <!-- TAB 2: 25 FLY PATTERNS GUIDE -->
-    <div id="tab-flies" class="space-y-4 hidden">
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">🪡 Essential 25 Driftless Flies</h2>
-        <p class="text-xs text-gray-400">Ranked from beginner/cheap to advanced patterns for WI & MN waters.</p>
-        
-        <div id="fly-box-list" class="space-y-3"></div>
-      </div>
-    </div>
-
-    <!-- TAB 3: CATCH LOG -->
+    <!-- TAB 2: CATCH LOG (WITH DROPDOWN LOCATION SELECTOR) -->
     <div id="tab-catches" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <h2 class="text-sm font-bold text-highlight">📝 Log a Catch</h2>
         <form id="catch-form" onsubmit="submitCatch(event)" class="space-y-3 text-xs">
           <div>
-            <label class="block text-gray-400 mb-1">Stream / Waterway</label>
-            <input type="text" id="log-stream" required placeholder="e.g. Kinnickinnic River" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
+            <label class="block text-gray-400 mb-1">Select Access Point / Stream</label>
+            <select id="log-stream-select" onchange="toggleCustomStreamInput()" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
+              <option value="">Loading access points...</option>
+            </select>
           </div>
+
+          <!-- Hidden manual input field for custom spots -->
+          <div id="custom-stream-container" class="hidden">
+            <label class="block text-gray-400 mb-1">Custom Location Name</label>
+            <input type="text" id="log-stream-custom" placeholder="e.g. Secret Spring Branch" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-gray-400 mb-1">Species</label>
@@ -100,7 +101,7 @@
           </div>
           <div>
             <label class="block text-gray-400 mb-1">Notes / Pattern Used</label>
-            <textarea id="log-notes" rows="2" placeholder="e.g. Size 16 Parachute BWO in run." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent"></textarea>
+            <textarea id="log-notes" rows="2" placeholder="e.g. Size 16 Parachute BWO in tail of pool." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent"></textarea>
           </div>
           <button type="submit" class="w-full bg-accent text-white py-2 rounded-lg font-bold shadow">Save to Journal 💾</button>
         </form>
@@ -109,6 +110,15 @@
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <h2 class="text-sm font-bold text-gray-200">📖 Catch Journal History</h2>
         <div id="catch-history-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: 25 FLY PATTERNS GUIDE -->
+    <div id="tab-flies" class="space-y-4 hidden">
+      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+        <h2 class="text-sm font-bold text-highlight">🪡 Essential 25 Driftless Flies</h2>
+        <p class="text-xs text-gray-400">Ranked from beginner/cheap to advanced patterns for WI & MN waters.</p>
+        <div id="fly-box-list" class="space-y-3"></div>
       </div>
     </div>
 
@@ -129,6 +139,7 @@
 
     let map;
     let mapMarkers = {};
+    let loadedAccessPoints = [];
 
     function initMap() {
       map = L.map('map').setView([44.82, -92.35], 10);
@@ -141,12 +152,15 @@
 
     async function loadAccessPoints() {
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/driftless_access_points?select=*`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/driftless_access_points?select=*&order=stream_name.asc`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         if (res.ok) {
-          const points = await res.json();
-          renderAccessUI(points);
+          loadedAccessPoints = await res.json();
+          renderAccessUI(loadedAccessPoints);
+          populateCatchLocationDropdown(loadedAccessPoints);
+        } else {
+          document.getElementById('access-cards-list').innerHTML = `<p class="text-xs text-red-400">Check Supabase RLS permissions.</p>`;
         }
       } catch (e) {
         document.getElementById('sync-status').innerText = "● Offline Mode";
@@ -155,6 +169,11 @@
 
     function renderAccessUI(points) {
       const container = document.getElementById('access-cards-list');
+      if (points.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-500">No access points found in database.</p>`;
+        return;
+      }
+
       container.innerHTML = '';
       Object.values(mapMarkers).forEach(m => map.removeLayer(m));
       mapMarkers = {};
@@ -184,61 +203,42 @@
       });
     }
 
-    // 25 FLY PATTERNS DATA STRUCTURE
-    const FLY_BOX = [
-      // BEGINNER / EASY & CHEAP
-      { level: "Beginner (Easy & Cheap)", name: "San Juan Worm", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+san+juan+worm" },
-      { level: "Beginner (Easy & Cheap)", name: "Mop Fly", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+mop+fly" },
-      { level: "Beginner (Easy & Cheap)", name: "Zebra Midge", type: "Midge Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+zebra+midge" },
-      { level: "Beginner (Easy & Cheap)", name: "Foam Beetle", type: "Terrestrial Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+foam+beetle" },
-      { level: "Beginner (Easy & Cheap)", name: "Walts Worm", type: "General Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+walts+worm" },
-      { level: "Beginner (Easy & Cheap)", name: "Egg Fly / Disco Egg", type: "Attractor", link: "https://www.youtube.com/results?search_query=how+to+tie+egg+fly+trout" },
-      { level: "Beginner (Easy & Cheap)", name: "Pat's Rubber Legs", type: "Stonefly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pats+rubber+legs" },
-      { level: "Beginner (Easy & Cheap)", name: "Woolly Bugger", type: "Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+woolly+bugger" },
+    function populateCatchLocationDropdown(points) {
+      const select = document.getElementById('log-stream-select');
+      select.innerHTML = `<option value="">-- Select Stream / Access Point --</option>`;
+      
+      points.forEach(pt => {
+        const label = `${pt.stream_name} — ${pt.access_name} (${pt.county})`;
+        select.innerHTML += `<option value="${label}">${label}</option>`;
+      });
 
-      // INTERMEDIATE
-      { level: "Intermediate", name: "Gold-Ribbed Hare's Ear", type: "General Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+gold+ribbed+hares+ear" },
-      { level: "Intermediate", name: "Pheasant Tail Nymph", type: "Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pheasant+tail+nymph" },
-      { level: "Intermediate", name: "Elk Hair Caddis", type: "Caddis Dry Fly", link: "https://www.youtube.com/results?search_query=how+to+tie+elk+hair+caddis" },
-      { level: "Intermediate", name: "Griffith's Gnat", type: "Midge Cluster Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+griffiths+gnat" },
-      { level: "Intermediate", name: "RS2", type: "Emerger / Mayfly", link: "https://www.youtube.com/results?search_query=how+to+tie+rs2+fly" },
-      { level: "Intermediate", name: "Frenchie Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+frenchie+nymph" },
-      { level: "Intermediate", name: "Parachute Adams", type: "General Mayfly Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+adams" },
-      { level: "Intermediate", name: "Parachute BWO", type: "Spring/Fall Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+bwo" },
-      { level: "Intermediate", name: "X-Caddis", type: "Caddis Emerger", link: "https://www.youtube.com/results?search_query=how+to+tie+x+caddis" },
-      { level: "Intermediate", name: "Rainbow Warrior", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+rainbow+warrior+nymph" },
+      select.innerHTML += `<option value="CUSTOM">➕ Other / Custom Location...</option>`;
+    }
 
-      // ADVANCED
-      { level: "Advanced", name: "Hippie Scud", type: "Midwest Driftless Scud", link: "https://www.youtube.com/results?search_query=how+to+tie+hippie+scud" },
-      { level: "Advanced", name: "Morrish Hopper", type: "Summer Hopper", link: "https://www.youtube.com/results?search_query=how+to+tie+morrish+hopper" },
-      { level: "Advanced", name: "Perdigon Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+perdigon+nymph" },
-      { level: "Advanced", name: "Copper John", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+copper+john" },
-      { level: "Advanced", name: "Prince Nymph", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+prince+nymph" },
-      { level: "Advanced", name: "Muddler Minnow", type: "Streamer / Sculpin", link: "https://www.youtube.com/results?search_query=how+to+tie+muddler+minnow" },
-      { level: "Advanced", name: "Sex Drive / Complex Articulated Streamer", type: "Trophy Trout Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+articulated+trout+streamer" }
-    ];
-
-    function renderFlyBox() {
-      const container = document.getElementById('fly-box-list');
-      container.innerHTML = FLY_BOX.map((f, i) => `
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 flex justify-between items-center text-xs">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-accent">${i+1}. ${f.name}</span>
-            </div>
-            <p class="text-[10px] text-gray-400 mt-0.5">${f.type} • <span class="text-highlight">${f.level}</span></p>
-          </div>
-          <a href="${f.link}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-accent font-bold px-2.5 py-1.5 rounded text-[11px] border border-gray-700 transition">
-            🎬 Video
-          </a>
-        </div>
-      `).join('');
+    function toggleCustomStreamInput() {
+      const select = document.getElementById('log-stream-select');
+      const customContainer = document.getElementById('custom-stream-container');
+      if (select.value === 'CUSTOM') {
+        customContainer.classList.remove('hidden');
+      } else {
+        customContainer.classList.add('hidden');
+      }
     }
 
     async function submitCatch(e) {
       e.preventDefault();
+      const selectVal = document.getElementById('log-stream-select').value;
+      const customVal = document.getElementById('log-stream-custom').value;
+      
+      const finalStreamName = (selectVal === 'CUSTOM') ? customVal : selectVal;
+
+      if (!finalStreamName) {
+        alert("Please select or enter a location.");
+        return;
+      }
+
       const payload = {
-        stream_name: document.getElementById('log-stream').value,
+        stream_name: finalStreamName,
         species: document.getElementById('log-species').value,
         length_inches: parseFloat(document.getElementById('log-length').value) || null,
         notes: document.getElementById('log-notes').value
@@ -259,8 +259,11 @@
         if (res.ok) {
           alert("Catch saved!");
           document.getElementById('catch-form').reset();
+          toggleCustomStreamInput();
           loadCatches();
           switchTab('catches');
+        } else {
+          alert("Could not save catch. Check Supabase write permissions.");
         }
       } catch (err) { alert("Error saving catch."); }
     }
@@ -289,6 +292,51 @@
           `).join('');
         }
       } catch (e) {}
+    }
+
+    const FLY_BOX = [
+      { level: "Beginner (Easy & Cheap)", name: "San Juan Worm", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+san+juan+worm" },
+      { level: "Beginner (Easy & Cheap)", name: "Mop Fly", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+mop+fly" },
+      { level: "Beginner (Easy & Cheap)", name: "Zebra Midge", type: "Midge Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+zebra+midge" },
+      { level: "Beginner (Easy & Cheap)", name: "Foam Beetle", type: "Terrestrial Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+foam+beetle" },
+      { level: "Beginner (Easy & Cheap)", name: "Walts Worm", type: "General Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+walts+worm" },
+      { level: "Beginner (Easy & Cheap)", name: "Egg Fly / Disco Egg", type: "Attractor", link: "https://www.youtube.com/results?search_query=how+to+tie+egg+fly+trout" },
+      { level: "Beginner (Easy & Cheap)", name: "Pat's Rubber Legs", type: "Stonefly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pats+rubber+legs" },
+      { level: "Beginner (Easy & Cheap)", name: "Woolly Bugger", type: "Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+woolly+bugger" },
+      { level: "Intermediate", name: "Gold-Ribbed Hare's Ear", type: "General Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+gold+ribbed+hares+ear" },
+      { level: "Intermediate", name: "Pheasant Tail Nymph", type: "Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pheasant+tail+nymph" },
+      { level: "Intermediate", name: "Elk Hair Caddis", type: "Caddis Dry Fly", link: "https://www.youtube.com/results?search_query=how+to+tie+elk+hair+caddis" },
+      { level: "Intermediate", name: "Griffith's Gnat", type: "Midge Cluster Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+griffiths+gnat" },
+      { level: "Intermediate", name: "RS2", type: "Emerger / Mayfly", link: "https://www.youtube.com/results?search_query=how+to+tie+rs2+fly" },
+      { level: "Intermediate", name: "Frenchie Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+frenchie+nymph" },
+      { level: "Intermediate", name: "Parachute Adams", type: "General Mayfly Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+adams" },
+      { level: "Intermediate", name: "Parachute BWO", type: "Spring/Fall Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+bwo" },
+      { level: "Intermediate", name: "X-Caddis", type: "Caddis Emerger", link: "https://www.youtube.com/results?search_query=how+to+tie+x+caddis" },
+      { level: "Intermediate", name: "Rainbow Warrior", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+rainbow+warrior+nymph" },
+      { level: "Advanced", name: "Hippie Scud", type: "Midwest Driftless Scud", link: "https://www.youtube.com/results?search_query=how+to+tie+hippie+scud" },
+      { level: "Advanced", name: "Morrish Hopper", type: "Summer Hopper", link: "https://www.youtube.com/results?search_query=how+to+tie+morrish+hopper" },
+      { level: "Advanced", name: "Perdigon Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+perdigon+nymph" },
+      { level: "Advanced", name: "Copper John", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+copper+john" },
+      { level: "Advanced", name: "Prince Nymph", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+prince+nymph" },
+      { level: "Advanced", name: "Muddler Minnow", type: "Streamer / Sculpin", link: "https://www.youtube.com/results?search_query=how+to+tie+muddler+minnow" },
+      { level: "Advanced", name: "Sex Drive / Complex Articulated Streamer", type: "Trophy Trout Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+articulated+trout+streamer" }
+    ];
+
+    function renderFlyBox() {
+      const container = document.getElementById('fly-box-list');
+      container.innerHTML = FLY_BOX.map((f, i) => `
+        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 flex justify-between items-center text-xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-accent">${i+1}. ${f.name}</span>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-0.5">${f.type} • <span class="text-highlight">${f.level}</span></p>
+          </div>
+          <a href="${f.link}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-accent font-bold px-2.5 py-1.5 rounded text-[11px] border border-gray-700 transition">
+            🎬 Video
+          </a>
+        </div>
+      `).join('');
     }
 
     function focusPin(id, lat, lng) {
@@ -327,7 +375,7 @@
     }
 
     function switchTab(tab) {
-      ['map', 'flies', 'catches', 'hatches'].forEach(t => {
+      ['map', 'catches', 'flies', 'hatches'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`btn-${t}`).classList.remove('text-accent', 'bg-gray-800');
         document.getElementById(`btn-${t}`).classList.add('text-gray-400');
