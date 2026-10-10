@@ -3,78 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Western WI & MN Trout Stream Commander</title>
+  <title>Driftless Stream Commander</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          colors: {
-            darkbg: '#121212',
-            cardbg: '#1E1E1E',
-            accent: '#4CAF50',
-            highlight: '#FF9800'
-          }
+          colors: { darkbg: '#121212', cardbg: '#1E1E1E', accent: '#4CAF50', highlight: '#FF9800' }
         }
       }
     }
   </script>
-  <style>
-    #map { height: 380px; width: 100%; border-radius: 0.75rem; z-index: 10; }
-  </style>
+  <style> #map { height: 360px; width: 100%; border-radius: 0.75rem; z-index: 10; } </style>
 </head>
 <body class="bg-darkbg text-gray-100 font-sans min-h-screen pb-20">
 
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
-    <h1 class="text-xl font-bold text-accent">Driftless Stream Commander</h1>
-    <p class="text-xs text-gray-400">Live WI & MN DNR Trout Streams & Access Guide</p>
+    <h1 class="text-xl font-bold text-accent">Driftless Stream Guide</h1>
+    <p class="text-xs text-gray-400">Maps, Access Points & Offline Field PDFs</p>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
-    <button onclick="switchTab('map')" id="btn-map" class="py-2 px-3 rounded text-accent bg-gray-800">🗺️ Live Map</button>
+    <button onclick="switchTab('map')" id="btn-map" class="py-2 px-3 rounded text-accent bg-gray-800">🗺️ Map</button>
+    <button onclick="switchTab('pdfs')" id="btn-pdfs" class="py-2 px-3 rounded text-gray-400">📄 County PDFs</button>
     <button onclick="switchTab('catches')" id="btn-catches" class="py-2 px-3 rounded text-gray-400">🎣 Catch Log</button>
     <button onclick="switchTab('hatches')" id="btn-hatches" class="py-2 px-3 rounded text-gray-400">🐛 Hatches</button>
-    <button onclick="switchTab('flies')" id="btn-flies" class="py-2 px-3 rounded text-gray-400">🪡 Flies</button>
   </nav>
 
   <main class="p-4 max-w-md mx-auto space-y-4">
 
-    <!-- TAB 1: LIVE MAP -->
+    <!-- TAB 1: ACCESS MAP -->
     <div id="tab-map" class="space-y-4">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-bold text-highlight">📍 State GIS & Public Access</h2>
-          <span id="sync-status" class="text-[10px] text-accent">● DNR GIS Connected</span>
+          <h2 class="text-sm font-bold text-highlight">📍 Public Stream Access</h2>
+          <span id="sync-status" class="text-[10px] text-accent">● Supabase Connected</span>
         </div>
-        <p class="text-xs text-gray-400">Official classified trout water lines & public access points loaded directly from State GIS.</p>
         
         <div id="map"></div>
-        
-        <button onclick="locateUser()" class="w-full bg-accent text-white py-2 rounded-lg text-xs font-bold shadow">Find My GPS Location 🎯</button>
+        <button onclick="locateUser()" class="w-full bg-accent text-white py-2 rounded-lg text-xs font-bold shadow">Find My Location 🎯</button>
       </div>
 
-      <!-- USGS STREAM METRICS -->
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800">
-        <h2 class="text-sm font-bold text-gray-200 mb-2">🌊 Real-Time USGS Gauge Flows</h2>
-        <div id="stream-list" class="space-y-3 text-xs"></div>
+      <!-- ACCESS DIRECTORY -->
+      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+        <h2 class="text-sm font-bold text-gray-200">🚗 Access Directory</h2>
+        <input type="text" id="search-input" onkeyup="filterAccessList()" placeholder="Filter by stream, town, or county..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
+        <div id="access-cards-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
       </div>
     </div>
 
-    <!-- TAB 2: CATCH LOG -->
+    <!-- TAB 2: COUNTY PDFs (OFFLINE-READY) -->
+    <div id="tab-pdfs" class="space-y-4 hidden">
+      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+        <h2 class="text-sm font-bold text-highlight">📄 Official WI DNR County Maps</h2>
+        <p class="text-xs text-gray-400">Tap a county map below to open or download the official high-resolution PDF. Once loaded while online, your phone caches it for offline use on the river.</p>
+        
+        <div class="space-y-2">
+          <a href="https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/trout/PierceTrout.pdf" target="_blank" class="block bg-gray-900 p-3 rounded-lg border border-gray-800 hover:border-accent transition">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-accent text-xs">Pierce County Trout Waters</span>
+              <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">Official PDF 📄</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1">Covers Rush River, Trimbelle, Isabelle, Plum Creek & Eau Galle.</p>
+          </a>
+
+          <a href="https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/trout/StCroixTrout.pdf" target="_blank" class="block bg-gray-900 p-3 rounded-lg border border-gray-800 hover:border-accent transition">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-accent text-xs">St. Croix County Trout Waters</span>
+              <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">Official PDF 📄</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1">Covers Kinnickinnic River, Willow River & tributaries.</p>
+          </a>
+
+          <a href="https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/trout/DunnTrout.pdf" target="_blank" class="block bg-gray-900 p-3 rounded-lg border border-gray-800 hover:border-accent transition">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-accent text-xs">Dunn County Trout Waters</span>
+              <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">Official PDF 📄</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1">Covers Cady Creek, Hay River & surrounding spring creeks.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CATCH LOG -->
     <div id="tab-catches" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <h2 class="text-sm font-bold text-highlight">📝 Log a Catch</h2>
-        <p class="text-xs text-gray-400">Record session details after fishing.</p>
-        
         <form id="catch-form" onsubmit="submitCatch(event)" class="space-y-3 text-xs">
           <div>
-            <label class="block text-gray-400 mb-1">Stream / Location</label>
-            <input type="text" id="log-stream" required placeholder="e.g. Kinnickinnic River - CTH FF" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
+            <label class="block text-gray-400 mb-1">Stream / Waterway</label>
+            <input type="text" id="log-stream" required placeholder="e.g. Kinnickinnic River" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -88,86 +111,92 @@
             </div>
             <div>
               <label class="block text-gray-400 mb-1">Length (Inches)</label>
-              <input type="number" step="0.5" id="log-length" placeholder="e.g. 15.5" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
+              <input type="number" step="0.5" id="log-length" placeholder="e.g. 16.5" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
             </div>
           </div>
           <div>
-            <label class="block text-gray-400 mb-1">Fly Used / Notes</label>
-            <textarea id="log-notes" rows="2" placeholder="e.g. Size 14 Pat's Rubber Legs in the deep pool." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent"></textarea>
+            <label class="block text-gray-400 mb-1">Notes / Pattern Used</label>
+            <textarea id="log-notes" rows="2" placeholder="e.g. Size 16 Parachute BWO in run." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent"></textarea>
           </div>
           <button type="submit" class="w-full bg-accent text-white py-2 rounded-lg font-bold shadow">Save to Journal 💾</button>
         </form>
       </div>
 
-      <!-- PAST CATCHES FEED -->
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <h2 class="text-sm font-bold text-gray-200">📖 Catch Journal History</h2>
         <div id="catch-history-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
       </div>
     </div>
 
-    <!-- TAB 3: HATCHES -->
+    <!-- TAB 4: HATCHES -->
     <div id="tab-hatches" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800">
-        <h2 class="text-sm font-bold text-highlight mb-3">📅 Driftless Hatch Matrix</h2>
+        <h2 class="text-sm font-bold text-highlight mb-3">📅 Driftless Hatch Guide</h2>
         <div id="hatch-list" class="space-y-3 text-xs"></div>
-      </div>
-    </div>
-
-    <!-- TAB 4: FLY RECIPES -->
-    <div id="tab-flies" class="space-y-4 hidden">
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800">
-        <h2 class="text-sm font-bold text-highlight mb-3">🪡 Recommended Tying Patterns</h2>
-        <div id="fly-list" class="space-y-4 text-xs"></div>
       </div>
     </div>
 
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
   <script>
     const SUPABASE_URL = 'https://crtvkqpaajyfubdrofwx.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_VM-b9PU3kKoGwbjF8w2qxQ_ujdrkuSU';
 
     let map;
+    let mapMarkers = {};
 
     function initMap() {
       map = L.map('map').setView([44.82, -92.35], 10);
+      L.tileLayer('https://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-      L.tileLayer('https://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(map);
-
-      L.esri.featureLayer({
-        url: 'https://dnrmaps.wi.gov/arcgis/rest/services/TROUT/Trout_Map_Services/MapServer/0',
-        style: function () {
-          return { color: '#4CAF50', weight: 3 };
-        }
-      }).addTo(map).bindPopup(function (layer) {
-        return `<b>${layer.feature.properties.WATERBODY_NAME || 'Trout Stream'}</b><br>` +
-               `<span class="text-xs text-gray-300">Class: ${layer.feature.properties.TROUT_CLASS || 'Classified Water'}</span>`;
-      });
-
-      loadSupabasePins();
+      loadAccessPoints();
       loadCatches();
     }
 
-    async function loadSupabasePins() {
+    async function loadAccessPoints() {
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/driftless_access_points?select=*`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         if (res.ok) {
           const points = await res.json();
-          points.forEach(pt => {
-            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
-            L.marker([pt.latitude, pt.longitude]).addTo(map)
-              .bindPopup(`<b>${pt.stream_name}</b><br><span class="text-xs font-bold text-accent">${pt.access_name}</span><br><a href="${mapsUrl}" target="_blank" class="text-xs text-highlight underline">Open in Maps 🧭</a>`);
-          });
+          renderAccessUI(points);
         }
-      } catch (e) {}
+      } catch (e) {
+        document.getElementById('sync-status').innerText = "● Offline Mode";
+      }
+    }
+
+    function renderAccessUI(points) {
+      const container = document.getElementById('access-cards-list');
+      container.innerHTML = '';
+      Object.values(mapMarkers).forEach(m => map.removeLayer(m));
+      mapMarkers = {};
+
+      points.forEach(pt => {
+        const marker = L.marker([pt.latitude, pt.longitude]).addTo(map)
+          .bindPopup(`<b>${pt.stream_name}</b><br><span class="text-xs font-bold text-accent">${pt.access_name}</span><br><span class="text-xs text-gray-300">${pt.notes}</span>`);
+        
+        mapMarkers[pt.id] = marker;
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
+
+        container.innerHTML += `
+          <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-2 access-card" data-search="${pt.stream_name.toLowerCase()} ${pt.access_name.toLowerCase()} ${pt.county.toLowerCase()}">
+            <div onclick="focusPin(${pt.id}, ${pt.latitude}, ${pt.longitude})" class="cursor-pointer">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-accent">${pt.stream_name} — <span class="text-gray-200">${pt.access_name}</span></span>
+                <span class="text-[10px] text-highlight bg-gray-800 px-2 py-0.5 rounded">${pt.county}</span>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1">${pt.notes}</p>
+            </div>
+            <div class="flex justify-between items-center pt-1 border-t border-gray-800 text-[11px]">
+              <span class="text-gray-500 font-mono">${pt.latitude.toFixed(4)}, ${pt.longitude.toFixed(4)}</span>
+              <a href="${mapsUrl}" target="_blank" class="bg-accent/20 text-accent hover:bg-accent hover:text-white px-2.5 py-1 rounded font-bold transition">🧭 Open in Maps</a>
+            </div>
+          </div>
+        `;
+      });
     }
 
     async function submitCatch(e) {
@@ -192,16 +221,12 @@
         });
 
         if (res.ok) {
-          alert("Catch logged!");
+          alert("Catch saved!");
           document.getElementById('catch-form').reset();
           loadCatches();
           switchTab('catches');
-        } else {
-          alert("Could not save catch. Verify Supabase table permissions.");
         }
-      } catch (err) {
-        alert("Network error saving catch.");
-      }
+      } catch (err) { alert("Error saving catch."); }
     }
 
     async function loadCatches() {
@@ -227,9 +252,19 @@
             </div>
           `).join('');
         }
-      } catch (e) {
-        container.innerHTML = `<p class="text-xs text-red-400">Could not load catch history.</p>`;
-      }
+      } catch (e) {}
+    }
+
+    function filterAccessList() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      document.querySelectorAll('.access-card').forEach(card => {
+        card.style.display = card.getAttribute('data-search').includes(query) ? 'block' : 'none';
+      });
+    }
+
+    function focusPin(id, lat, lng) {
+      map.setView([lat, lng], 14);
+      if (mapMarkers[id]) mapMarkers[id].openPopup();
     }
 
     let userMarker = null;
@@ -239,40 +274,9 @@
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           if (userMarker) map.removeLayer(userMarker);
-          userMarker = L.marker([lat, lng], {
-            icon: L.divIcon({ className: '', html: '🔵', iconSize: [20, 20] })
-          }).addTo(map).bindPopup("You are here").openPopup();
+          userMarker = L.marker([lat, lng], { icon: L.divIcon({ html: '🔵', iconSize: [20, 20] }) }).addTo(map);
           map.setView([lat, lng], 13);
-        }, () => alert("Unable to retrieve location."));
-      }
-    }
-
-    const STREAMS_USGS = [
-      { name: "Kinnickinnic River (River Falls)", county: "St. Croix Co.", usgs: "05342000" },
-      { name: "Rush River (Elmwood)", county: "Pierce Co.", usgs: "05341500" }
-    ];
-
-    async function renderStreams() {
-      const container = document.getElementById('stream-list');
-      container.innerHTML = '';
-      for (const s of STREAMS_USGS) {
-        let flowText = "Loading CFS...";
-        try {
-          const res = await fetch(`https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${s.usgs}&parameterCd=00060`);
-          const json = await res.json();
-          flowText = `${json.value.timeSeries[0].values[0].value[0].value} CFS`;
-        } catch (e) {
-          flowText = "Normal flow";
-        }
-        container.innerHTML += `
-          <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 flex justify-between items-center">
-            <div>
-              <span class="font-bold text-gray-200">${s.name}</span>
-              <p class="text-[10px] text-gray-400">${s.county}</p>
-            </div>
-            <span class="text-[11px] font-bold text-highlight bg-gray-800 px-2 py-1 rounded">${flowText}</span>
-          </div>
-        `;
+        });
       }
     }
 
@@ -281,11 +285,6 @@
       { season: "Summer", insect: "Caddis & Midges", months: "June - August", imitation: "X-Caddis / Elk Hair Caddis", size: "14-18" },
       { season: "Summer", insect: "Terrestrials (Hoppers/Beetles)", months: "July - September", imitation: "Foam Beetle / Pat's Rubber Legs", size: "10-14" },
       { season: "Fall", insect: "Fall BWO & Streamers", months: "October - November", imitation: "Olive Sparkle Dun / Woolly Bugger", size: "6-12" }
-    ];
-
-    const FLIES = [
-      { name: "Pat's Rubber Legs", category: "Nymph", match: "Stonefly / Attractor", steps: ["Secure hook, tie in rubber leg tails.", "Wrap chenille forward for a thick segmented body.", "Tie in front legs and finish head."] },
-      { name: "Elk Hair Caddis", category: "Dry Fly", match: "Kinni Riffles", steps: ["Dub body forward, palmer hackle over body.", "Clean and stack elk hair for a flared wing.", "Whip finish and trim head."] }
     ];
 
     function renderHatches() {
@@ -298,20 +297,8 @@
       `).join('');
     }
 
-    function renderFlies() {
-      document.getElementById('fly-list').innerHTML = FLIES.map(f => `
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800">
-          <div class="flex justify-between"><span class="font-bold text-accent">${f.name}</span><span class="text-gray-400">${f.category}</span></div>
-          <p class="text-[11px] text-highlight mt-1">Matches: ${f.match}</p>
-          <ol class="list-decimal list-inside text-gray-300 mt-2 space-y-1 text-[11px]">
-            ${f.steps.map(step => `<li>${step}</li>`).join('')}
-          </ol>
-        </div>
-      `).join('');
-    }
-
     function switchTab(tab) {
-      ['map', 'catches', 'hatches', 'flies'].forEach(t => {
+      ['map', 'pdfs', 'catches', 'hatches'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`btn-${t}`).classList.remove('text-accent', 'bg-gray-800');
         document.getElementById(`btn-${t}`).classList.add('text-gray-400');
@@ -324,9 +311,7 @@
 
     window.onload = function() {
       initMap();
-      renderStreams();
       renderHatches();
-      renderFlies();
     };
   </script>
 </body>
