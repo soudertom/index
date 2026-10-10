@@ -16,31 +16,31 @@
       }
     }
   </script>
-  <style> #map { height: 360px; width: 100%; border-radius: 0.75rem; z-index: 10; } </style>
+  <style> #map { height: 320px; width: 100%; border-radius: 0.75rem; z-index: 10; } </style>
 </head>
 <body class="bg-darkbg text-gray-100 font-sans min-h-screen pb-20">
 
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">Driftless Stream Guide</h1>
-    <p class="text-xs text-gray-400">Maps, Access Points & Offline Field PDFs</p>
+    <p class="text-xs text-gray-400">WI & MN Field Access & Fly Box Guide</p>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
-    <button onclick="switchTab('map')" id="btn-map" class="py-2 px-3 rounded text-accent bg-gray-800">🗺️ Map</button>
-    <button onclick="switchTab('pdfs')" id="btn-pdfs" class="py-2 px-3 rounded text-gray-400">📄 County PDFs</button>
+    <button onclick="switchTab('map')" id="btn-map" class="py-2 px-3 rounded text-accent bg-gray-800">🗺️ Access</button>
+    <button onclick="switchTab('flies')" id="btn-flies" class="py-2 px-3 rounded text-gray-400">🪡 25 Flies</button>
     <button onclick="switchTab('catches')" id="btn-catches" class="py-2 px-3 rounded text-gray-400">🎣 Catch Log</button>
     <button onclick="switchTab('hatches')" id="btn-hatches" class="py-2 px-3 rounded text-gray-400">🐛 Hatches</button>
   </nav>
 
   <main class="p-4 max-w-md mx-auto space-y-4">
 
-    <!-- TAB 1: ACCESS MAP -->
+    <!-- TAB 1: ACCESS MAP & LIST -->
     <div id="tab-map" class="space-y-4">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-bold text-highlight">📍 Public Stream Access</h2>
+          <h2 class="text-sm font-bold text-highlight">📍 Map & GPS</h2>
           <span id="sync-status" class="text-[10px] text-accent">● Supabase Connected</span>
         </div>
         
@@ -48,45 +48,29 @@
         <button onclick="locateUser()" class="w-full bg-accent text-white py-2 rounded-lg text-xs font-bold shadow">Find My Location 🎯</button>
       </div>
 
+      <!-- OFFICIAL DNR PAGE LINK BUTTON -->
+      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-2">
+        <h3 class="text-xs font-bold text-gray-200">📄 WI DNR Official Maps Page</h3>
+        <p class="text-[11px] text-gray-400">Download county-by-county high-res PDF maps directly from the state site:</p>
+        <a href="https://dnr.wisconsin.gov/topic/Fishing/trout/streammaps" target="_blank" class="block text-center bg-gray-800 hover:bg-gray-700 text-highlight font-bold text-xs py-2 rounded-lg border border-gray-700 transition">
+          Open WI DNR Trout Maps Webpage ↗
+        </a>
+      </div>
+
       <!-- ACCESS DIRECTORY -->
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-gray-200">🚗 Access Directory</h2>
-        <input type="text" id="search-input" onkeyup="filterAccessList()" placeholder="Filter by stream, town, or county..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
+        <h2 class="text-sm font-bold text-gray-200">🚗 Selectable Stream Access Points</h2>
         <div id="access-cards-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
       </div>
     </div>
 
-    <!-- TAB 2: COUNTY PDFs (OFFLINE-READY) -->
-    <div id="tab-pdfs" class="space-y-4 hidden">
+    <!-- TAB 2: 25 FLY PATTERNS GUIDE -->
+    <div id="tab-flies" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">📄 Official WI DNR County Maps</h2>
-        <p class="text-xs text-gray-400">Tap a county map below to open or download the official high-resolution PDF. Once loaded while online, your phone caches it for offline use on the river.</p>
+        <h2 class="text-sm font-bold text-highlight">🪡 Essential 25 Driftless Flies</h2>
+        <p class="text-xs text-gray-400">Ranked from beginner/cheap to advanced patterns for WI & MN waters.</p>
         
-        <div class="space-y-2">
-          <a href="https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/trout/PierceTrout.pdf" target="_blank" class="block bg-gray-900 p-3 rounded-lg border border-gray-800 hover:border-accent transition">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-accent text-xs">Pierce County Trout Waters</span>
-              <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">Official PDF 📄</span>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-1">Covers Rush River, Trimbelle, Isabelle, Plum Creek & Eau Galle.</p>
-          </a>
-
-          <a href="https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/trout/StCroixTrout.pdf" target="_blank" class="block bg-gray-900 p-3 rounded-lg border border-gray-800 hover:border-accent transition">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-accent text-xs">St. Croix County Trout Waters</span>
-              <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">Official PDF 📄</span>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-1">Covers Kinnickinnic River, Willow River & tributaries.</p>
-          </a>
-
-          <a href="https://dnr.wisconsin.gov/sites/default/files/topic/Fishing/trout/DunnTrout.pdf" target="_blank" class="block bg-gray-900 p-3 rounded-lg border border-gray-800 hover:border-accent transition">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-accent text-xs">Dunn County Trout Waters</span>
-              <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">Official PDF 📄</span>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-1">Covers Cady Creek, Hay River & surrounding spring creeks.</p>
-          </a>
-        </div>
+        <div id="fly-box-list" class="space-y-3"></div>
       </div>
     </div>
 
@@ -152,6 +136,7 @@
 
       loadAccessPoints();
       loadCatches();
+      renderFlyBox();
     }
 
     async function loadAccessPoints() {
@@ -182,7 +167,7 @@
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
 
         container.innerHTML += `
-          <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-2 access-card" data-search="${pt.stream_name.toLowerCase()} ${pt.access_name.toLowerCase()} ${pt.county.toLowerCase()}">
+          <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-2">
             <div onclick="focusPin(${pt.id}, ${pt.latitude}, ${pt.longitude})" class="cursor-pointer">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-accent">${pt.stream_name} — <span class="text-gray-200">${pt.access_name}</span></span>
@@ -197,6 +182,57 @@
           </div>
         `;
       });
+    }
+
+    // 25 FLY PATTERNS DATA STRUCTURE
+    const FLY_BOX = [
+      // BEGINNER / EASY & CHEAP
+      { level: "Beginner (Easy & Cheap)", name: "San Juan Worm", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+san+juan+worm" },
+      { level: "Beginner (Easy & Cheap)", name: "Mop Fly", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+mop+fly" },
+      { level: "Beginner (Easy & Cheap)", name: "Zebra Midge", type: "Midge Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+zebra+midge" },
+      { level: "Beginner (Easy & Cheap)", name: "Foam Beetle", type: "Terrestrial Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+foam+beetle" },
+      { level: "Beginner (Easy & Cheap)", name: "Walts Worm", type: "General Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+walts+worm" },
+      { level: "Beginner (Easy & Cheap)", name: "Egg Fly / Disco Egg", type: "Attractor", link: "https://www.youtube.com/results?search_query=how+to+tie+egg+fly+trout" },
+      { level: "Beginner (Easy & Cheap)", name: "Pat's Rubber Legs", type: "Stonefly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pats+rubber+legs" },
+      { level: "Beginner (Easy & Cheap)", name: "Woolly Bugger", type: "Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+woolly+bugger" },
+
+      // INTERMEDIATE
+      { level: "Intermediate", name: "Gold-Ribbed Hare's Ear", type: "General Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+gold+ribbed+hares+ear" },
+      { level: "Intermediate", name: "Pheasant Tail Nymph", type: "Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pheasant+tail+nymph" },
+      { level: "Intermediate", name: "Elk Hair Caddis", type: "Caddis Dry Fly", link: "https://www.youtube.com/results?search_query=how+to+tie+elk+hair+caddis" },
+      { level: "Intermediate", name: "Griffith's Gnat", type: "Midge Cluster Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+griffiths+gnat" },
+      { level: "Intermediate", name: "RS2", type: "Emerger / Mayfly", link: "https://www.youtube.com/results?search_query=how+to+tie+rs2+fly" },
+      { level: "Intermediate", name: "Frenchie Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+frenchie+nymph" },
+      { level: "Intermediate", name: "Parachute Adams", type: "General Mayfly Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+adams" },
+      { level: "Intermediate", name: "Parachute BWO", type: "Spring/Fall Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+bwo" },
+      { level: "Intermediate", name: "X-Caddis", type: "Caddis Emerger", link: "https://www.youtube.com/results?search_query=how+to+tie+x+caddis" },
+      { level: "Intermediate", name: "Rainbow Warrior", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+rainbow+warrior+nymph" },
+
+      // ADVANCED
+      { level: "Advanced", name: "Hippie Scud", type: "Midwest Driftless Scud", link: "https://www.youtube.com/results?search_query=how+to+tie+hippie+scud" },
+      { level: "Advanced", name: "Morrish Hopper", type: "Summer Hopper", link: "https://www.youtube.com/results?search_query=how+to+tie+morrish+hopper" },
+      { level: "Advanced", name: "Perdigon Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+perdigon+nymph" },
+      { level: "Advanced", name: "Copper John", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+copper+john" },
+      { level: "Advanced", name: "Prince Nymph", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+prince+nymph" },
+      { level: "Advanced", name: "Muddler Minnow", type: "Streamer / Sculpin", link: "https://www.youtube.com/results?search_query=how+to+tie+muddler+minnow" },
+      { level: "Advanced", name: "Sex Drive / Complex Articulated Streamer", type: "Trophy Trout Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+articulated+trout+streamer" }
+    ];
+
+    function renderFlyBox() {
+      const container = document.getElementById('fly-box-list');
+      container.innerHTML = FLY_BOX.map((f, i) => `
+        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 flex justify-between items-center text-xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-accent">${i+1}. ${f.name}</span>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-0.5">${f.type} • <span class="text-highlight">${f.level}</span></p>
+          </div>
+          <a href="${f.link}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-accent font-bold px-2.5 py-1.5 rounded text-[11px] border border-gray-700 transition">
+            🎬 Video
+          </a>
+        </div>
+      `).join('');
     }
 
     async function submitCatch(e) {
@@ -255,13 +291,6 @@
       } catch (e) {}
     }
 
-    function filterAccessList() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      document.querySelectorAll('.access-card').forEach(card => {
-        card.style.display = card.getAttribute('data-search').includes(query) ? 'block' : 'none';
-      });
-    }
-
     function focusPin(id, lat, lng) {
       map.setView([lat, lng], 14);
       if (mapMarkers[id]) mapMarkers[id].openPopup();
@@ -298,7 +327,7 @@
     }
 
     function switchTab(tab) {
-      ['map', 'pdfs', 'catches', 'hatches'].forEach(t => {
+      ['map', 'flies', 'catches', 'hatches'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`btn-${t}`).classList.remove('text-accent', 'bg-gray-800');
         document.getElementById(`btn-${t}`).classList.add('text-gray-400');
