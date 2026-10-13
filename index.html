@@ -25,7 +25,7 @@
   </header>
 
   <!-- Navigation Tabs -->
-  <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
+  <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold sticky top-[4.25rem] z-40">
     <button onclick="switchTab('generator')" id="btn-generator" class="py-2 px-3 rounded text-accent bg-gray-800">⚡ Gen</button>
     <button onclick="switchTab('coach')" id="btn-coach" class="py-2 px-3 rounded text-gray-400">🤖 AI Coach</button>
     <button onclick="switchTab('library')" id="btn-library" class="py-2 px-3 rounded text-gray-400">📚 Library</button>
@@ -232,7 +232,7 @@
               cloudLogsCache.map(h => `
                 <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
                   <div class="flex justify-between items-center">
-                    <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row (${h.strokes || 0} strokes)` : 'Strength Only'}</span>
+                    <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `${h.rowing_mins}m Row (${h.strokes || 0} strokes)` : 'Strength Only'}</span>
                     <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at ? h.logged_at.split('T')[0] : 'Recent'}</span>
                   </div>
                   <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
@@ -580,16 +580,23 @@
     }
 
     function switchTab(tab) {
+      clearInterval(timerInterval);
       ['generator', 'coach', 'library', 'log'].forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         const btnEl = document.getElementById(`btn-${t}`);
         if (tabEl) tabEl.classList.add('hidden');
-        if (btnEl) { btnEl.classList.remove('text-accent', 'bg-gray-800'); btnEl.classList.add('text-gray-400'); }
+        if (btnEl) {
+          btnEl.classList.remove('text-accent', 'bg-gray-800');
+          btnEl.classList.add('text-gray-400');
+        }
       });
       const targetTab = document.getElementById(`tab-${tab}`);
       const targetBtn = document.getElementById(`btn-${tab}`);
       if (targetTab) targetTab.classList.remove('hidden');
-      if (targetBtn) { targetBtn.classList.add('text-accent', 'bg-gray-800'); targetBtn.classList.remove('text-gray-400'); }
+      if (targetBtn) {
+        targetBtn.classList.add('text-accent', 'bg-gray-800');
+        targetBtn.classList.remove('text-gray-400');
+      }
     }
 
     window.onload = function() { initApp(); };
