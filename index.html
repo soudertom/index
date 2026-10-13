@@ -3,249 +3,526 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Driftless Stream Commander</title>
+  <title>Birkie Training Commander</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          colors: { darkbg: '#121212', cardbg: '#1E1E1E', accent: '#4CAF50', highlight: '#FF9800' }
+          colors: { darkbg: '#121212', cardbg: '#1E1E1E', accent: '#3B82F6', highlight: '#F59E0B' }
         }
       }
     }
   </script>
-  <style> #map { height: 320px; width: 100%; border-radius: 0.75rem; z-index: 10; } </style>
 </head>
 <body class="bg-darkbg text-gray-100 font-sans min-h-screen pb-20">
 
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
-    <h1 class="text-xl font-bold text-accent">Driftless Stream Guide</h1>
-    <p class="text-xs text-gray-400">WI & MN Field Access & Catch Journal</p>
+    <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
+    <p class="text-xs text-gray-400">Interactive Circuit + Net Cardio Summary + Step Back</p>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
-    <button onclick="switchTab('map')" id="btn-map" class="py-2 px-3 rounded text-accent bg-gray-800">🗺️ Access</button>
-    <button onclick="switchTab('catches')" id="btn-catches" class="py-2 px-3 rounded text-gray-400">🎣 Catch Log</button>
-    <button onclick="switchTab('flies')" id="btn-flies" class="py-2 px-3 rounded text-gray-400">🪡 25 Flies</button>
-    <button onclick="switchTab('hatches')" id="btn-hatches" class="py-2 px-3 rounded text-gray-400">🐛 Hatches</button>
+    <button onclick="switchTab('generator')" id="btn-generator" class="py-2 px-3 rounded text-accent bg-gray-800">⚡ Gen</button>
+    <button onclick="switchTab('coach')" id="btn-coach" class="py-2 px-3 rounded text-gray-400">🤖 AI Coach</button>
+    <button onclick="switchTab('library')" id="btn-library" class="py-2 px-3 rounded text-gray-400">📚 Library</button>
+    <button onclick="switchTab('log')" id="btn-log" class="py-2 px-3 rounded text-gray-400">📝 History</button>
   </nav>
 
   <main class="p-4 max-w-md mx-auto space-y-4">
 
-    <!-- TAB 1: ACCESS MAP & LIST -->
-    <div id="tab-map" class="space-y-4">
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+    <!-- TAB 1: WORKOUT GENERATOR & ACTIVE CIRCUIT -->
+    <div id="tab-generator" class="space-y-4">
+
+      <!-- SMART SUGGESTION BANNER -->
+      <div id="smart-suggestion-banner" class="bg-blue-950/60 border border-blue-900/60 p-3 rounded-xl space-y-1.5">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-bold text-highlight">📍 Map & GPS</h2>
-          <span id="sync-status" class="text-[10px] text-accent">● Supabase Connected</span>
+          <span class="text-xs font-bold text-accent">💡 Smart Split Recommendation</span>
+          <span class="text-[10px] bg-accent text-white px-2 py-0.5 rounded font-bold">Sun-Sun Cycle</span>
+        </div>
+        <p id="suggestion-text" class="text-[11px] text-gray-300">Checking weekly frequency...</p>
+        <button onclick="applySmartSuggestion()" class="w-full bg-accent/20 hover:bg-accent/30 text-accent font-bold py-1.5 rounded text-xs border border-accent/40 transition mt-1">
+          Apply Suggested Split 🚀
+        </button>
+      </div>
+
+      <div id="generator-controls" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">⚙️ Build Session</h2>
+          <span id="sync-status" class="text-[10px] text-accent">● Cloud Sync Active</span>
         </div>
         
-        <div id="map"></div>
-        <button onclick="locateUser()" class="w-full bg-accent text-white py-2 rounded-lg text-xs font-bold shadow">Find My Location 🎯</button>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Workout Split</label>
+            <select id="workout-focus" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
+              <option value="push">Upper A / Push</option>
+              <option value="pull">Upper B / Pull</option>
+              <option value="legs">Lower / Legs</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-400 mb-1">Water Rower Block</label>
+            <select id="rowing-time" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
+              <option value="0">Strength + Core Only</option>
+              <option value="20">+ 20 Min Row</option>
+              <option value="30">+ 30 Min Steady State</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="generateWorkout()" class="w-full bg-accent text-white py-2.5 rounded-lg text-xs font-bold shadow hover:bg-blue-600 transition">
+          Generate Circuit Plan 🚀
+        </button>
       </div>
 
-      <!-- OFFICIAL DNR PAGE LINK BUTTON -->
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-2">
-        <h3 class="text-xs font-bold text-gray-200">📄 WI DNR Official Maps Page</h3>
-        <p class="text-[11px] text-gray-400">Download official high-res county PDF maps directly from WI DNR:</p>
-        <a href="https://dnr.wisconsin.gov/topic/Fishing/trout/streammaps" target="_blank" class="block text-center bg-gray-800 hover:bg-gray-700 text-highlight font-bold text-xs py-2 rounded-lg border border-gray-700 transition">
-          Open WI DNR Trout Maps Webpage ↗
-        </a>
+      <!-- PRE-SESSION PREVIEW CARD WITH EDITABLE REPS/WEIGHT -->
+      <div id="active-workout-card" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3 hidden">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+          <h3 class="text-sm font-bold text-accent">Customize Session Preview</h3>
+          <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">4 Exercises + 2 Core</span>
+        </div>
+
+        <div id="exercise-preview-list" class="space-y-2"></div>
+
+        <button onclick="startInteractiveSession()" class="w-full bg-emerald-600 text-white py-3 rounded-lg text-xs font-bold shadow hover:bg-emerald-700 transition mt-2">
+          Start Session (Step-by-Step) ▶️
+        </button>
       </div>
 
-      <!-- ACCESS DIRECTORY -->
+      <!-- LIVE INTERACTIVE CIRCUIT PLAYER -->
+      <div id="interactive-player-card" class="bg-cardbg p-5 rounded-xl border border-gray-800 space-y-4 hidden">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+          <div class="flex gap-2">
+            <button onclick="previousStep()" id="btn-prev-step" class="text-[10px] text-gray-300 bg-gray-800 px-2 py-0.5 rounded border border-gray-700 font-bold hidden">⬅️ Back</button>
+            <span id="circuit-progress-badge" class="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded font-bold">Step 1 of X</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="togglePauseSession()" id="btn-pause-resume" class="text-[10px] text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900 font-bold">⏸️ Pause</button>
+            <button onclick="exitInteractiveSession()" class="text-[10px] text-red-400 bg-red-950/40 px-2 py-0.5 rounded border border-red-900">Abort</button>
+          </div>
+        </div>
+
+        <!-- ACTIVE STEP VIEW -->
+        <div id="step-display-area" class="space-y-3 text-center py-2"></div>
+
+        <!-- NEXT UP PREVIEW -->
+        <div id="next-up-area" class="bg-gray-900/60 border border-gray-800/80 p-2 rounded-lg text-[11px] text-gray-400 text-center"></div>
+
+        <!-- ACTION BUTTONS -->
+        <div id="circuit-action-area" class="space-y-2 pt-2"></div>
+      </div>
+
+      <!-- END-OF-WORKOUT CARDIO & SUMMARY SCREEN -->
+      <div id="cardio-summary-card" class="bg-cardbg p-5 rounded-xl border border-gray-800 space-y-4 hidden">
+        <div class="border-b border-gray-800 pb-2 text-center">
+          <h3 class="text-base font-bold text-highlight">🏁 Session Complete!</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Log your net rowing & cardio totals before syncing to Supabase.</p>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-gray-300 mb-1 font-bold">Total Time Rowed / Cardio (Minutes)</label>
+            <input type="number" id="summary-row-mins" value="15" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-center text-white font-bold text-sm">
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1 font-bold">Total Water Rower Strokes</label>
+            <input type="number" id="summary-row-strokes" value="450" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-center text-white font-bold text-sm">
+          </div>
+        </div>
+
+        <button onclick="saveCompletedWorkoutToCloud()" class="w-full bg-emerald-600 text-white py-3 rounded-lg text-xs font-bold shadow hover:bg-emerald-700 transition mt-2">
+          Save Workout to Supabase Cloud ✅
+        </button>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: AI COACH -->
+    <div id="tab-coach" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-gray-200">🚗 Selectable Stream Access Points</h2>
-        <div id="access-cards-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
-          <p class="text-xs text-gray-500">Loading stream points...</p>
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">🤖 AI Performance Coach</h2>
+          <button onclick="loadCloudLogs()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh Analysis</button>
+        </div>
+        <div id="ai-coach-output" class="space-y-3 text-xs">
+          <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">Loading analytics...</div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: CATCH LOG (WITH DROPDOWN LOCATION SELECTOR) -->
-    <div id="tab-catches" class="space-y-4 hidden">
+    <!-- TAB 3: MOVEMENT LIBRARY -->
+    <div id="tab-library" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">📝 Log a Catch</h2>
-        <form id="catch-form" onsubmit="submitCatch(event)" class="space-y-3 text-xs">
-          <div>
-            <label class="block text-gray-400 mb-1">Select Access Point / Stream</label>
-            <select id="log-stream-select" onchange="toggleCustomStreamInput()" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
-              <option value="">Loading access points...</option>
-            </select>
-          </div>
-
-          <!-- Hidden manual input field for custom spots -->
-          <div id="custom-stream-container" class="hidden">
-            <label class="block text-gray-400 mb-1">Custom Location Name</label>
-            <input type="text" id="log-stream-custom" placeholder="e.g. Secret Spring Branch" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-gray-400 mb-1">Species</label>
-              <select id="log-species" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
-                <option value="Brown Trout">Brown Trout</option>
-                <option value="Brook Trout">Brook Trout</option>
-                <option value="Rainbow Trout">Rainbow Trout</option>
-                <option value="Smallmouth Bass">Smallmouth Bass</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-gray-400 mb-1">Length (Inches)</label>
-              <input type="number" step="0.5" id="log-length" placeholder="e.g. 16.5" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent">
-            </div>
-          </div>
-          <div>
-            <label class="block text-gray-400 mb-1">Notes / Pattern Used</label>
-            <textarea id="log-notes" rows="2" placeholder="e.g. Size 16 Parachute BWO in tail of pool." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-accent"></textarea>
-          </div>
-          <button type="submit" class="w-full bg-accent text-white py-2 rounded-lg font-bold shadow">Save to Journal 💾</button>
-        </form>
-      </div>
-
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-gray-200">📖 Catch Journal History</h2>
-        <div id="catch-history-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">🏋️ Movement Library</h2>
+        </div>
+        <input type="text" id="db-search" onkeyup="filterLibrary()" placeholder="Search movement..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
+        <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
 
-    <!-- TAB 3: 25 FLY PATTERNS GUIDE -->
-    <div id="tab-flies" class="space-y-4 hidden">
+    <!-- TAB 4: HISTORY -->
+    <div id="tab-log" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">🪡 Essential 25 Driftless Flies</h2>
-        <p class="text-xs text-gray-400">Ranked from beginner/cheap to advanced patterns for WI & MN waters.</p>
-        <div id="fly-box-list" class="space-y-3"></div>
-      </div>
-    </div>
-
-    <!-- TAB 4: HATCHES -->
-    <div id="tab-hatches" class="space-y-4 hidden">
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800">
-        <h2 class="text-sm font-bold text-highlight mb-3">📅 Driftless Hatch Guide</h2>
-        <div id="hatch-list" class="space-y-3 text-xs"></div>
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">📖 Cloud History</h2>
+          <button onclick="loadCloudLogs()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh</button>
+        </div>
+        <div id="completed-log-list" class="space-y-2 max-h-[28rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
 
   </main>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const SUPABASE_URL = 'https://crtvkqpaajyfubdrofwx.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_VM-b9PU3kKoGwbjF8w2qxQ_ujdrkuSU';
 
-    let map;
-    let mapMarkers = {};
-    let loadedAccessPoints = [];
+    const EXERCISE_DB = [
+      { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '10', default_wt: 52.5 },
+      { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest', default_sets: 4, default_reps: '10', default_wt: 30 },
+      { id: 'p3', name: 'Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Shoulders', default_sets: 3, default_reps: '10', default_wt: 30 },
+      { id: 'p4', name: 'Dumbbell Kick Back', category: 'push', equipment: 'Dumbbell', focus: 'Triceps', default_sets: 3, default_reps: '10', default_wt: 35 },
+      { id: 'p5', name: 'Lateral Raise', category: 'push', equipment: 'Dumbbell', focus: 'Side Delts', default_sets: 3, default_reps: '12', default_wt: 20 },
+      { id: 'p6', name: 'Overhead Tricep Extension', category: 'push', equipment: 'Dumbbell', focus: 'Triceps', default_sets: 3, default_reps: '10', default_wt: 52.5 },
+      { id: 'l1', name: 'One-Arm Dumbbell Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lats', default_sets: 4, default_reps: '10', default_wt: 52.5 },
+      { id: 'l2', name: 'Reverse Row (supinated grip)', category: 'pull', equipment: 'Dumbbell', focus: 'Mid-Back', default_sets: 4, default_reps: '10', default_wt: 52.5 },
+      { id: 'l3', name: 'Dumbbell Pullover', category: 'pull', equipment: 'Dumbbell', focus: 'Lats & Serratus', default_sets: 3, default_reps: '12', default_wt: 52.5 },
+      { id: 'l4', name: 'Dumbbell Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Biceps', default_sets: 3, default_reps: '10', default_wt: 25 },
+      { id: 'l5', name: 'Rear Delt Fly', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts', default_sets: 3, default_reps: '12', default_wt: 35 },
+      { id: 'l6', name: 'Hammer Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Brachialis', default_sets: 3, default_reps: '10', default_wt: 35 },
+      { id: 'g1', name: 'Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads', default_sets: 4, default_reps: '10', default_wt: 50 },
+      { id: 'g2', name: 'Dumbbell Romanian Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Hamstrings', default_sets: 4, default_reps: '10', default_wt: 90 },
+      { id: 'g3', name: 'Bulgarian Split Squat', category: 'legs', equipment: 'Dumbbell', focus: 'Quads / Glutes', default_sets: 3, default_reps: '8', default_wt: 60 },
+      { id: 'g4', name: 'Hip Thrust', category: 'legs', equipment: 'Dumbbell', focus: 'Glutes', default_sets: 4, default_reps: '10', default_wt: 50 },
+      { id: 'g5', name: 'Dumbbell Calf Raise', category: 'legs', equipment: 'Dumbbell', focus: 'Calves', default_sets: 3, default_reps: '15', default_wt: 100 },
+      { id: 'c1', name: 'Russian Twist', category: 'core', equipment: 'Kettlebell', focus: 'Obliques', default_sets: 3, default_reps: '15', default_wt: 25 },
+      { id: 'c2', name: 'Leg Raise', category: 'core', equipment: 'Bodyweight', focus: 'Lower Abs', default_sets: 3, default_reps: '12', default_wt: 0 }
+    ];
 
-    function initMap() {
-      map = L.map('map').setView([44.82, -92.35], 10);
-      L.tileLayer('https://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+    let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
+    let currentWorkout = { strength: [], core: [], rowingTime: 0 };
+    let circuitSteps = [];
+    let currentStepIndex = 0;
+    let timerInterval = null;
+    let isPaused = false;
+    let currentTimeLeft = 0;
+    let cloudLogsCache = [];
+    let suggestedSplit = 'push';
 
-      loadAccessPoints();
-      loadCatches();
-      renderFlyBox();
+    async function initApp() {
+      renderLibrary();
+      await loadCloudLogs();
     }
 
-    async function loadAccessPoints() {
+    async function loadCloudLogs() {
+      const container = document.getElementById('completed-log-list');
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/driftless_access_points?select=*&order=stream_name.asc`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         if (res.ok) {
-          loadedAccessPoints = await res.json();
-          renderAccessUI(loadedAccessPoints);
-          populateCatchLocationDropdown(loadedAccessPoints);
-        } else {
-          document.getElementById('access-cards-list').innerHTML = `<p class="text-xs text-red-400">Check Supabase RLS permissions.</p>`;
+          cloudLogsCache = await res.json();
+          if (container) {
+            container.innerHTML = cloudLogsCache.length === 0 ? `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>` :
+              cloudLogsCache.map(h => `
+                <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row (${h.strokes || 0} strokes)` : 'Strength Only'}</span>
+                    <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at ? h.logged_at.split('T')[0] : 'Recent'}</span>
+                  </div>
+                  <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
+                    ${Array.isArray(h.performances) ? h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('') : ''}
+                  </div>
+                </div>
+              `).join('');
+          }
+          generateAICoachInsights(cloudLogsCache);
+          calculateSundayToSundaySuggestion(cloudLogsCache);
         }
-      } catch (e) {
-        document.getElementById('sync-status').innerText = "● Offline Mode";
-      }
+      } catch (e) { console.error(e); }
     }
 
-    function renderAccessUI(points) {
-      const container = document.getElementById('access-cards-list');
-      if (points.length === 0) {
-        container.innerHTML = `<p class="text-xs text-gray-500">No access points found in database.</p>`;
-        return;
+    function calculateSundayToSundaySuggestion(logs) {
+      const now = new Date();
+      const sunday = new Date(now);
+      sunday.setDate(now.getDate() - now.getDay());
+      sunday.setHours(0, 0, 0, 0);
+
+      const thisWeekLogs = (logs || []).filter(l => new Date(l.logged_at) >= sunday);
+      let counts = { PUSH: 0, PULL: 0, LEGS: 0 };
+      thisWeekLogs.forEach(l => {
+        let cat = (l.split_category || '').toUpperCase();
+        if (cat.includes('PUSH')) counts.PUSH++;
+        else if (cat.includes('PULL')) counts.PULL++;
+        else if (cat.includes('LEGS') || cat.includes('LOWER')) counts.LEGS++;
+      });
+
+      let minVal = Infinity;
+      let lowestSplit = 'push';
+      ['PUSH', 'PULL', 'LEGS'].forEach(split => {
+        if (counts[split] < minVal) { minVal = counts[split]; lowestSplit = split.toLowerCase(); }
+      });
+
+      suggestedSplit = lowestSplit;
+      const splitNames = { push: 'Push (Chest & Tris)', pull: 'Pull (Back & Bis)', legs: 'Legs (Quads & Hams)' };
+      const text = document.getElementById('suggestion-text');
+      if (text) text.innerHTML = `This week (Sun-Sun): Push (${counts.PUSH}), Pull (${counts.PULL}), Legs (${counts.LEGS}).<br><b>Recommended next: ${splitNames[lowestSplit]}</b>`;
+    }
+
+    function applySmartSuggestion() {
+      const select = document.getElementById('workout-focus');
+      if (select) select.value = suggestedSplit;
+      generateWorkout();
+    }
+
+    function generateAICoachInsights(logs) {
+      const coachContainer = document.getElementById('ai-coach-output');
+      if (!coachContainer || !logs || logs.length === 0) return;
+      let totalSessions = logs.length;
+      let totalRowingMinutes = logs.reduce((acc, l) => acc + (l.rowing_mins || 0), 0);
+
+      coachContainer.innerHTML = `
+        <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-2">
+          <div class="font-bold text-accent">🎿 Nordic Conditioning Status</div>
+          <p class="text-gray-300 text-[11px]">Logged <b>${totalSessions} sessions</b> in Supabase with a cumulative <b>${totalRowingMinutes} minutes</b> on the water rower.</p>
+        </div>
+      `;
+    }
+
+    function generateWorkout() {
+      const focus = document.getElementById('workout-focus').value;
+      const rowingMins = parseInt(document.getElementById('rowing-time').value);
+      
+      let candidates = EXERCISE_DB.filter(e => e.category === focus);
+      let selectedStrength = [];
+      while (selectedStrength.length < Math.min(4, candidates.length)) {
+        const ex = candidates[Math.floor(Math.random() * candidates.length)];
+        if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
 
-      container.innerHTML = '';
-      Object.values(mapMarkers).forEach(m => map.removeLayer(m));
-      mapMarkers = {};
+      let coreCandidates = EXERCISE_DB.filter(e => e.category === 'core');
+      let selectedCore = [];
+      while (selectedCore.length < Math.min(2, coreCandidates.length)) {
+        const cEx = coreCandidates[Math.floor(Math.random() * coreCandidates.length)];
+        if (!selectedCore.some(s => s.id === cEx.id)) selectedCore.push(cEx);
+      }
 
-      points.forEach(pt => {
-        const marker = L.marker([pt.latitude, pt.longitude]).addTo(map)
-          .bindPopup(`<b>${pt.stream_name}</b><br><span class="text-xs font-bold text-accent">${pt.access_name}</span><br><span class="text-xs text-gray-300">${pt.notes}</span>`);
-        
-        mapMarkers[pt.id] = marker;
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}`;
+      currentWorkout = { strength: selectedStrength, core: selectedCore, rowingTime: rowingMins };
+      renderPreviewList();
+      document.getElementById('active-workout-card').classList.remove('hidden');
+    }
 
-        container.innerHTML += `
-          <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-2">
-            <div onclick="focusPin(${pt.id}, ${pt.latitude}, ${pt.longitude})" class="cursor-pointer">
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-accent">${pt.stream_name} — <span class="text-gray-200">${pt.access_name}</span></span>
-                <span class="text-[10px] text-highlight bg-gray-800 px-2 py-0.5 rounded">${pt.county}</span>
-              </div>
-              <p class="text-[11px] text-gray-400 mt-1">${pt.notes}</p>
-            </div>
-            <div class="flex justify-between items-center pt-1 border-t border-gray-800 text-[11px]">
-              <span class="text-gray-500 font-mono">${pt.latitude.toFixed(4)}, ${pt.longitude.toFixed(4)}</span>
-              <a href="${mapsUrl}" target="_blank" class="bg-accent/20 text-accent hover:bg-accent hover:text-white px-2.5 py-1 rounded font-bold transition">🧭 Open in Maps</a>
-            </div>
+    function renderPreviewList() {
+      const previewList = document.getElementById('exercise-preview-list');
+      const allExs = [...currentWorkout.strength, ...currentWorkout.core];
+      
+      previewList.innerHTML = allExs.map((ex, i) => `
+        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1.5 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-gray-200"><b>#${i+1}</b> ${ex.name}</span>
+            <span class="text-[10px] text-gray-400">${ex.focus}</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 text-[11px]">
+            <div>Sets: <input type="number" id="prev-sets-${ex.id}" value="${ex.default_sets}" class="w-full bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
+            <div>Reps: <input type="text" id="prev-reps-${ex.id}" value="${ex.default_reps}" class="w-full bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
+            <div>Wt (lbs): <input type="number" step="0.5" id="prev-wt-${ex.id}" value="${ex.default_wt}" class="w-full bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function startInteractiveSession() {
+      const allExs = [...currentWorkout.strength, ...currentWorkout.core];
+      allExs.forEach(ex => {
+        const sEl = document.getElementById(`prev-sets-${ex.id}`);
+        const rEl = document.getElementById(`prev-reps-${ex.id}`);
+        const wEl = document.getElementById(`prev-wt-${ex.id}`);
+        if (sEl) ex.default_sets = parseInt(sEl.value) || ex.default_sets;
+        if (rEl) ex.default_reps = rEl.value;
+        if (wEl) ex.default_wt = parseFloat(wEl.value) || 0;
+      });
+
+      circuitSteps = [];
+      allExs.forEach((ex, exIdx) => {
+        const sets = ex.default_sets || 3;
+        for (let s = 1; s <= sets; s++) {
+          circuitSteps.push({
+            type: 'exercise',
+            exerciseId: ex.id,
+            name: ex.name,
+            focus: ex.focus,
+            setNum: s,
+            totalSets: sets,
+            reps: ex.default_reps,
+            weight: ex.default_wt
+          });
+
+          if (s < sets || exIdx < allExs.length - 1) {
+            circuitSteps.push({ type: 'rest', duration: 30, label: 'Rest Between Sets' });
+          }
+        }
+
+        if (exIdx < allExs.length - 1) {
+          circuitSteps.push({ type: 'row', duration: 120, label: 'Transition Row (Water Rower)' });
+        }
+      });
+
+      currentStepIndex = 0;
+      isPaused = false;
+      document.getElementById('generator-controls').classList.add('hidden');
+      document.getElementById('active-workout-card').classList.add('hidden');
+      document.getElementById('smart-suggestion-banner').classList.add('hidden');
+      document.getElementById('cardio-summary-card').classList.add('hidden');
+      document.getElementById('interactive-player-card').classList.remove('hidden');
+
+      renderCurrentStep();
+    }
+
+    function renderCurrentStep() {
+      const display = document.getElementById('step-display-area');
+      const actionArea = document.getElementById('circuit-action-area');
+      const badge = document.getElementById('circuit-progress-badge');
+      const nextUpArea = document.getElementById('next-up-area');
+      const prevBtn = document.getElementById('btn-prev-step');
+
+      badge.innerText = `Step ${currentStepIndex + 1} of ${circuitSteps.length}`;
+      if (currentStepIndex > 0) prevBtn.classList.remove('hidden');
+      else prevBtn.classList.add('hidden');
+
+      const step = circuitSteps[currentStepIndex];
+
+      if (currentStepIndex < circuitSteps.length - 1) {
+        const nextStep = circuitSteps[currentStepIndex + 1];
+        let nextDesc = nextStep.type === 'exercise' ? `${nextStep.name} (Set 1)` : nextStep.label;
+        nextUpArea.innerHTML = `Next Up: <b>${nextDesc}</b>`;
+        nextUpArea.classList.remove('hidden');
+      } else {
+        nextUpArea.innerHTML = `Next Up: <b>Cardio & Summary Screen 🏁</b>`;
+      }
+
+      if (step.type === 'exercise') {
+        clearInterval(timerInterval);
+        display.innerHTML = `
+          <span class="text-[10px] bg-gray-800 text-highlight px-2 py-0.5 rounded font-bold uppercase">${step.focus}</span>
+          <h2 class="text-lg font-bold text-accent mt-2">${step.name}</h2>
+          <div class="text-3xl font-extrabold text-white my-3">SET ${step.setNum} OF ${step.totalSets}</div>
+          <div class="flex justify-center gap-4 text-xs text-gray-300">
+            <div>Target Reps: <input type="text" id="live-reps" value="${step.reps}" class="w-14 bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
+            <div>Weight (lbs): <input type="number" step="0.5" id="live-wt" value="${step.weight}" class="w-16 bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
           </div>
         `;
-      });
+        actionArea.innerHTML = `
+          <button onclick="advanceStep()" class="w-full bg-accent text-white py-3 rounded-xl font-bold text-xs shadow hover:bg-blue-600 transition">
+            Complete Set & Start Rest Timer ⏱️
+          </button>
+        `;
+      } else if (step.type === 'rest' || step.type === 'row') {
+        const isRow = step.type === 'row';
+        display.innerHTML = `
+          <span class="text-[10px] ${isRow ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'} px-2 py-0.5 rounded font-bold uppercase">${step.label}</span>
+          <h2 class="text-base font-bold text-gray-200 mt-2">${isRow ? '🚣 Paddle / Double Pole Pace' : '🧊 Breathe & Recover'}</h2>
+          <div id="countdown-timer" class="text-5xl font-extrabold text-highlight my-4">${step.duration}s</div>
+        `;
+        actionArea.innerHTML = `
+          <button onclick="advanceStep()" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 py-3 rounded-xl font-bold text-xs transition">
+            Skip / Advance ⏩
+          </button>
+        `;
+        startTimer(step.duration);
+      }
     }
 
-    function populateCatchLocationDropdown(points) {
-      const select = document.getElementById('log-stream-select');
-      select.innerHTML = `<option value="">-- Select Stream / Access Point --</option>`;
-      
-      points.forEach(pt => {
-        const label = `${pt.stream_name} — ${pt.access_name} (${pt.county})`;
-        select.innerHTML += `<option value="${label}">${label}</option>`;
-      });
-
-      select.innerHTML += `<option value="CUSTOM">➕ Other / Custom Location...</option>`;
-    }
-
-    function toggleCustomStreamInput() {
-      const select = document.getElementById('log-stream-select');
-      const customContainer = document.getElementById('custom-stream-container');
-      if (select.value === 'CUSTOM') {
-        customContainer.classList.remove('hidden');
+    function togglePauseSession() {
+      isPaused = !isPaused;
+      const btn = document.getElementById('btn-pause-resume');
+      if (isPaused) {
+        btn.innerText = "▶️ Resume";
+        btn.className = "text-[10px] text-emerald-300 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900 font-bold";
       } else {
-        customContainer.classList.add('hidden');
+        btn.innerText = "⏸️ Pause";
+        btn.className = "text-[10px] text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900 font-bold";
       }
     }
 
-    async function submitCatch(e) {
-      e.preventDefault();
-      const selectVal = document.getElementById('log-stream-select').value;
-      const customVal = document.getElementById('log-stream-custom').value;
-      
-      const finalStreamName = (selectVal === 'CUSTOM') ? customVal : selectVal;
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      currentTimeLeft = seconds;
+      const timerEl = document.getElementById('countdown-timer');
 
-      if (!finalStreamName) {
-        alert("Please select or enter a location.");
-        return;
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          currentTimeLeft--;
+          if (timerEl) timerEl.innerText = currentTimeLeft + 's';
+          if (currentTimeLeft <= 0) {
+            clearInterval(timerInterval);
+            advanceStep();
+          }
+        }
+      }, 1000);
+    }
+
+    function advanceStep() {
+      clearInterval(timerInterval);
+      const repInput = document.getElementById('live-reps');
+      const wtInput = document.getElementById('live-wt');
+      if (repInput && wtInput && circuitSteps[currentStepIndex].type === 'exercise') {
+        circuitSteps[currentStepIndex].reps = repInput.value;
+        circuitSteps[currentStepIndex].weight = parseFloat(wtInput.value) || 0;
       }
+
+      currentStepIndex++;
+      if (currentStepIndex >= circuitSteps.length) {
+        showCardioSummaryScreen();
+      } else {
+        renderCurrentStep();
+      }
+    }
+
+    function previousStep() {
+      if (currentStepIndex > 0) {
+        clearInterval(timerInterval);
+        currentStepIndex--;
+        renderCurrentStep();
+      }
+    }
+
+    function showCardioSummaryScreen() {
+      clearInterval(timerInterval);
+      document.getElementById('interactive-player-card').classList.add('hidden');
+      document.getElementById('cardio-summary-card').classList.remove('hidden');
+    }
+
+    async function saveCompletedWorkoutToCloud() {
+      let performancesMap = {};
+
+      circuitSteps.forEach(s => {
+        if (s.type === 'exercise') {
+          if (!performancesMap[s.name]) {
+            performancesMap[s.name] = { name: s.name, sets: 0, reps: String(s.reps), weight: Number(s.weight) };
+          }
+          performancesMap[s.name].sets++;
+          performancesMap[s.name].reps = String(s.reps);
+          performancesMap[s.name].weight = Number(s.weight);
+        }
+      });
+
+      const totalRowMins = parseInt(document.getElementById('summary-row-mins').value) || 0;
+      const totalStrokes = parseInt(document.getElementById('summary-row-strokes').value) || 0;
 
       const payload = {
-        stream_name: finalStreamName,
-        species: document.getElementById('log-species').value,
-        length_inches: parseFloat(document.getElementById('log-length').value) || null,
-        notes: document.getElementById('log-notes').value
+        split_category: String(document.getElementById('workout-focus').value).toUpperCase(),
+        rowing_mins: totalRowMins,
+        strokes: totalStrokes,
+        performances: Object.values(performancesMap)
       };
 
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/catch_logs`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs`, {
           method: 'POST',
           headers: {
             'apikey': SUPABASE_ANON_KEY,
@@ -257,139 +534,65 @@
         });
 
         if (res.ok) {
-          alert("Catch saved!");
-          document.getElementById('catch-form').reset();
-          toggleCustomStreamInput();
-          loadCatches();
-          switchTab('catches');
+          alert("Workout Completed & Logged to Supabase Cloud! 🎉");
+          document.getElementById('cardio-summary-card').classList.add('hidden');
+          document.getElementById('generator-controls').classList.remove('hidden');
+          document.getElementById('smart-suggestion-banner').classList.remove('hidden');
+          await loadCloudLogs();
+          switchTab('log');
         } else {
-          alert("Could not save catch. Check Supabase write permissions.");
+          const errText = await res.text();
+          alert("Error logging workout to cloud: " + errText);
         }
-      } catch (err) { alert("Error saving catch."); }
-    }
-
-    async function loadCatches() {
-      const container = document.getElementById('catch-history-list');
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/catch_logs?select=*&order=caught_at.desc`, {
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-        if (res.ok) {
-          const logs = await res.json();
-          if (logs.length === 0) {
-            container.innerHTML = `<p class="text-xs text-gray-500">No catches logged yet.</p>`;
-            return;
-          }
-          container.innerHTML = logs.map(l => `
-            <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-accent">${l.stream_name}</span>
-                <span class="text-[10px] text-highlight bg-gray-800 px-2 py-0.5 rounded">${l.caught_at ? l.caught_at.split('T')[0] : 'Recent'}</span>
-              </div>
-              <p class="text-gray-200 font-semibold">${l.species} ${l.length_inches ? `— ${l.length_inches}"` : ''}</p>
-              ${l.notes ? `<p class="text-[11px] text-gray-400">${l.notes}</p>` : ''}
-            </div>
-          `).join('');
-        }
-      } catch (e) {}
-    }
-
-    const FLY_BOX = [
-      { level: "Beginner (Easy & Cheap)", name: "San Juan Worm", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+san+juan+worm" },
-      { level: "Beginner (Easy & Cheap)", name: "Mop Fly", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+mop+fly" },
-      { level: "Beginner (Easy & Cheap)", name: "Zebra Midge", type: "Midge Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+zebra+midge" },
-      { level: "Beginner (Easy & Cheap)", name: "Foam Beetle", type: "Terrestrial Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+foam+beetle" },
-      { level: "Beginner (Easy & Cheap)", name: "Walts Worm", type: "General Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+walts+worm" },
-      { level: "Beginner (Easy & Cheap)", name: "Egg Fly / Disco Egg", type: "Attractor", link: "https://www.youtube.com/results?search_query=how+to+tie+egg+fly+trout" },
-      { level: "Beginner (Easy & Cheap)", name: "Pat's Rubber Legs", type: "Stonefly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pats+rubber+legs" },
-      { level: "Beginner (Easy & Cheap)", name: "Woolly Bugger", type: "Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+woolly+bugger" },
-      { level: "Intermediate", name: "Gold-Ribbed Hare's Ear", type: "General Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+gold+ribbed+hares+ear" },
-      { level: "Intermediate", name: "Pheasant Tail Nymph", type: "Mayfly Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+pheasant+tail+nymph" },
-      { level: "Intermediate", name: "Elk Hair Caddis", type: "Caddis Dry Fly", link: "https://www.youtube.com/results?search_query=how+to+tie+elk+hair+caddis" },
-      { level: "Intermediate", name: "Griffith's Gnat", type: "Midge Cluster Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+griffiths+gnat" },
-      { level: "Intermediate", name: "RS2", type: "Emerger / Mayfly", link: "https://www.youtube.com/results?search_query=how+to+tie+rs2+fly" },
-      { level: "Intermediate", name: "Frenchie Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+frenchie+nymph" },
-      { level: "Intermediate", name: "Parachute Adams", type: "General Mayfly Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+adams" },
-      { level: "Intermediate", name: "Parachute BWO", type: "Spring/Fall Dry", link: "https://www.youtube.com/results?search_query=how+to+tie+parachute+bwo" },
-      { level: "Intermediate", name: "X-Caddis", type: "Caddis Emerger", link: "https://www.youtube.com/results?search_query=how+to+tie+x+caddis" },
-      { level: "Intermediate", name: "Rainbow Warrior", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+rainbow+warrior+nymph" },
-      { level: "Advanced", name: "Hippie Scud", type: "Midwest Driftless Scud", link: "https://www.youtube.com/results?search_query=how+to+tie+hippie+scud" },
-      { level: "Advanced", name: "Morrish Hopper", type: "Summer Hopper", link: "https://www.youtube.com/results?search_query=how+to+tie+morrish+hopper" },
-      { level: "Advanced", name: "Perdigon Nymph", type: "Euro Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+perdigon+nymph" },
-      { level: "Advanced", name: "Copper John", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+copper+john" },
-      { level: "Advanced", name: "Prince Nymph", type: "Attractor Nymph", link: "https://www.youtube.com/results?search_query=how+to+tie+prince+nymph" },
-      { level: "Advanced", name: "Muddler Minnow", type: "Streamer / Sculpin", link: "https://www.youtube.com/results?search_query=how+to+tie+muddler+minnow" },
-      { level: "Advanced", name: "Sex Drive / Complex Articulated Streamer", type: "Trophy Trout Streamer", link: "https://www.youtube.com/results?search_query=how+to+tie+articulated+trout+streamer" }
-    ];
-
-    function renderFlyBox() {
-      const container = document.getElementById('fly-box-list');
-      container.innerHTML = FLY_BOX.map((f, i) => `
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 flex justify-between items-center text-xs">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-accent">${i+1}. ${f.name}</span>
-            </div>
-            <p class="text-[10px] text-gray-400 mt-0.5">${f.type} • <span class="text-highlight">${f.level}</span></p>
-          </div>
-          <a href="${f.link}" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-accent font-bold px-2.5 py-1.5 rounded text-[11px] border border-gray-700 transition">
-            🎬 Video
-          </a>
-        </div>
-      `).join('');
-    }
-
-    function focusPin(id, lat, lng) {
-      map.setView([lat, lng], 14);
-      if (mapMarkers[id]) mapMarkers[id].openPopup();
-    }
-
-    let userMarker = null;
-    function locateUser() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          if (userMarker) map.removeLayer(userMarker);
-          userMarker = L.marker([lat, lng], { icon: L.divIcon({ html: '🔵', iconSize: [20, 20] }) }).addTo(map);
-          map.setView([lat, lng], 13);
-        });
+      } catch (e) { 
+        alert("Network error saving workout: " + e.message); 
       }
     }
 
-    const HATCHES = [
-      { season: "Spring", insect: "Blue-Winged Olive (BWO)", months: "March - May", imitation: "Parachute BWO / Sparkle Dun", size: "16-20" },
-      { season: "Summer", insect: "Caddis & Midges", months: "June - August", imitation: "X-Caddis / Elk Hair Caddis", size: "14-18" },
-      { season: "Summer", insect: "Terrestrials (Hoppers/Beetles)", months: "July - September", imitation: "Foam Beetle / Pat's Rubber Legs", size: "10-14" },
-      { season: "Fall", insect: "Fall BWO & Streamers", months: "October - November", imitation: "Olive Sparkle Dun / Woolly Bugger", size: "6-12" }
-    ];
+    function exitInteractiveSession() {
+      clearInterval(timerInterval);
+      if (confirm("Are you sure you want to exit this session? Progress will be lost.")) {
+        document.getElementById('interactive-player-card').classList.add('hidden');
+        document.getElementById('cardio-summary-card').classList.add('hidden');
+        document.getElementById('generator-controls').classList.remove('hidden');
+        document.getElementById('smart-suggestion-banner').classList.remove('hidden');
+      }
+    }
 
-    function renderHatches() {
-      document.getElementById('hatch-list').innerHTML = HATCHES.map(h => `
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800">
-          <span class="text-highlight font-bold">${h.season} — ${h.insect}</span>
-          <p class="text-gray-400 mt-1">Months: ${h.months}</p>
-          <p class="text-accent mt-0.5">Recommended: ${h.imitation} (Size ${h.size})</p>
+    function renderLibrary() {
+      const container = document.getElementById('library-list');
+      if (!container) return;
+      container.innerHTML = EXERCISE_DB.map(ex => `
+        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1 lib-item" data-search="${ex.name.toLowerCase()} ${ex.category}">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-xs text-gray-200">${ex.name}</span>
+          </div>
+          <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Baseline: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
         </div>
       `).join('');
     }
 
-    function switchTab(tab) {
-      ['map', 'catches', 'flies', 'hatches'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        document.getElementById(`btn-${t}`).classList.remove('text-accent', 'bg-gray-800');
-        document.getElementById(`btn-${t}`).classList.add('text-gray-400');
+    function filterLibrary() {
+      const query = document.getElementById('db-search').value.toLowerCase();
+      document.querySelectorAll('.lib-item').forEach(item => {
+        item.style.display = item.getAttribute('data-search').includes(query) ? 'block' : 'none';
       });
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      document.getElementById(`btn-${tab}`).classList.add('text-accent', 'bg-gray-800');
-      document.getElementById(`btn-${tab}`).classList.remove('text-gray-400');
-      if(tab === 'map') { map.invalidateSize(); }
     }
 
-    window.onload = function() {
-      initMap();
-      renderHatches();
-    };
+    function switchTab(tab) {
+      ['generator', 'coach', 'library', 'log'].forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const btnEl = document.getElementById(`btn-${t}`);
+        if (tabEl) tabEl.classList.add('hidden');
+        if (btnEl) { btnEl.classList.remove('text-accent', 'bg-gray-800'); btnEl.classList.add('text-gray-400'); }
+      });
+      const targetTab = document.getElementById(`tab-${tab}`);
+      const targetBtn = document.getElementById(`btn-${tab}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      if (targetBtn) { targetBtn.classList.add('text-accent', 'bg-gray-800'); targetBtn.classList.remove('text-gray-400'); }
+    }
+
+    window.onload = function() { initApp(); };
   </script>
 </body>
 </html>
